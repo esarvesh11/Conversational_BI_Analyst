@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAMU CSEGSA × Snowflake Hackathon 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --snow: #0093EE; --snow-dk: #005F9E; --snow-lt: #E3F2FD;
+  --dark: #060D1A; --tx: #0D1117; --tm: #4B5563; --tl: #9CA3AF;
+  --bg: #FFFFFF; --bg2: #F5F8FC; --bd: #E2E8F0;
+  --ml-bg: #EFF8FF; --ml-border: #BAE0FD; --ml-text: #0055A5;
+  --ai-bg: #F5F0FF; --ai-border: #D8B4FE; --ai-text: #5B21B6;
+  --sg-bg: #ECFDF5; --sg-border: #6EE7B7; --sg-text: #065F46;
+  --an-bg: #FFF7ED; --an-border: #FED7AA; --an-text: #9A3412;
+  --pts-bg: #FEFCE8; --pts-border: #FDE047; --pts-text: #713F12;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Syne', -apple-system, sans-serif; color: var(--tx); background: var(--bg2); font-size: 15px; line-height: 1.6; }
+a { color: var(--snow); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--snow-dk); }
+
+/* HERO */
+.hero {
+  background: var(--dark);
+  color: #fff;
+  padding: 88px 48px 72px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -160px; right: -120px;
+  width: 640px; height: 640px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,147,238,0.16) 0%, transparent 65%);
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -100px; left: 30%;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.09) 0%, transparent 65%);
+}
+.hero-grid-overlay {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+.hero-inner { max-width: 1080px; margin: 0 auto; position: relative; z-index: 1; }
+.hero-eyebrow { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,147,238,0.14); border: 1px solid rgba(0,147,238,0.38);
+  color: #60BFFF; font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 6px 16px; border-radius: 100px;
+}
+.hero-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #0093EE; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+.hero-org { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.3); letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
+.hero h1 { font-size: clamp(36px, 5vw, 66px); font-weight: 800; line-height: 1.0; letter-spacing: -0.03em; margin-bottom: 18px; }
+.hero h1 .acc-snow { color: #0093EE; }
+.hero h1 .acc-purple { color: #A78BFA; }
+.hero-sub { font-size: 17px; color: rgba(255,255,255,0.48); font-weight: 400; max-width: 580px; margin-bottom: 52px; line-height: 1.7; font-family: 'DM Mono', monospace; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 0; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 36px; }
+.hmi { padding: 0 36px 0 0; }
+.hmi:first-child { padding-left: 0; }
+.hmi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.28); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+.hmi-val { font-size: 18px; font-weight: 700; color: #fff; }
+.hmi-val.highlight { color: #0093EE; }
+
+/* TIMER BANNER */
+.timer-banner {
+  background: linear-gradient(135deg, #0055A5 0%, #0093EE 50%, #7C3AED 100%);
+  padding: 16px 48px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.04em;
+}
+.timer-icon { font-size: 18px; }
+.timer-accent { background: rgba(255,255,255,0.2); border-radius: 6px; padding: 2px 10px; font-family: 'DM Mono', monospace; font-size: 13px; }
+
+/* NAV */
+.nav-bar { background: var(--bg); border-bottom: 1px solid var(--bd); padding: 0 48px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.nav-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; gap: 8px; height: 54px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+.nav-inner::-webkit-scrollbar { display: none; }
+.nav-link { font-size: 12px; font-weight: 600; color: var(--tm); text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: background .15s, color .15s; flex-shrink: 0; letter-spacing: 0.04em; }
+.nav-link:hover { color: var(--snow); background: var(--snow-lt); text-decoration: none; }
+.nav-sep { color: var(--bd); font-size: 18px; padding: 0 4px; }
+
+/* LAYOUT */
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 48px; }
+.section { padding: 72px 0; border-bottom: 1px solid var(--bd); background: var(--bg); }
+.section.alt { background: var(--bg2); }
+.section:last-of-type { border-bottom: none; }
+.sec-eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--snow); font-weight: 700; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+.sec-title { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+.sec-desc { font-size: 15px; color: var(--tm); max-width: 680px; margin-bottom: 40px; line-height: 1.75; }
+
+/* OVERVIEW CARDS */
+.ov-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.ov-card { background: var(--bg); border: 1px solid var(--bd); border-radius: 14px; padding: 22px 18px; border-top: 3px solid var(--snow); }
+.ov-icon { font-size: 24px; margin-bottom: 12px; }
+.ov-label { font-size: 10px; color: var(--tl); font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; font-family: 'DM Mono', monospace; }
+.ov-value { font-size: 16px; font-weight: 700; }
+
+/* SCORING NOTE */
+.ds-note { background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 12px; padding: 18px 22px; margin-bottom: 40px; font-size: 13.5px; color: #78350F; display: flex; gap: 12px; align-items: flex-start; line-height: 1.65; }
+.ds-note-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+/* TRACK */
+.track-section { margin-bottom: 56px; }
+.track-header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 2px solid var(--bd); }
+.track-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; padding: 6px 16px; border-radius: 100px; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; }
+.track-badge.ml { background: var(--ml-bg); color: var(--ml-text); border: 1px solid var(--ml-border); }
+.track-badge.ai { background: var(--ai-bg); color: var(--ai-text); border: 1px solid var(--ai-border); }
+.track-badge.sg { background: var(--sg-bg); color: var(--sg-text); border: 1px solid var(--sg-border); }
+.track-badge.an { background: var(--an-bg); color: var(--an-text); border: 1px solid var(--an-border); }
+.track-count { font-size: 12px; color: var(--tl); font-family: 'DM Mono', monospace; }
+.track-line { flex: 1; height: 1px; background: var(--bd); }
+
+/* PROBLEM CARD */
+.prompts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.prompts-grid.single { grid-template-columns: 1fr; }
+.pc { background: var(--bg); border: 1px solid var(--bd); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow .2s; }
+.pc:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.pc.ml { border-top: 4px solid var(--snow); }
+.pc.ai { border-top: 4px solid #7C3AED; }
+.pc.sg { border-top: 4px solid #059669; }
+.pc.an { border-top: 4px solid #EA580C; }
+.pc-head { padding: 24px 26px 20px; border-bottom: 1px solid var(--bd); }
+.pc-meta { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.pc-num { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 5px; font-family: 'DM Mono', monospace; }
+.pc-num.ml { color: var(--ml-text); } .pc-num.ai { color: var(--ai-text); } .pc-num.sg { color: var(--sg-text); } .pc-num.an { color: var(--an-text); }
+.pc-name { font-size: 16px; font-weight: 700; line-height: 1.3; }
+.pc-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-direction: column; align-items: flex-end; }
+.time-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 100px; white-space: nowrap; font-family: 'DM Mono', monospace; }
+.time-badge.ml { background: var(--ml-bg); color: var(--ml-text); border: 1px solid var(--ml-border); }
+.time-badge.ai { background: var(--ai-bg); color: var(--ai-text); border: 1px solid var(--ai-border); }
+.time-badge.sg { background: var(--sg-bg); color: var(--sg-text); border: 1px solid var(--sg-border); }
+.time-badge.an { background: var(--an-bg); color: var(--an-text); border: 1px solid var(--an-border); }
+.pts-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 100px; white-space: nowrap; background: var(--pts-bg); color: var(--pts-text); border: 1px solid var(--pts-border); font-family: 'DM Mono', monospace; }
+.pts-star { font-size: 13px; }
+.pc-desc { font-size: 13.5px; color: var(--tm); line-height: 1.7; }
+.pc-body { padding: 22px 26px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+.pc-body-wide { padding: 22px 26px; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.pc-body-wide-col { display: flex; flex-direction: column; gap: 20px; }
+.mini-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--tl); font-weight: 600; margin-bottom: 10px; font-family: 'DM Mono', monospace; }
+
+/* STEPS */
+.steps { display: flex; flex-direction: column; }
+.step { display: flex; gap: 11px; font-size: 13px; color: var(--tm); padding: 9px 0; border-bottom: 1px solid var(--bd); line-height: 1.55; align-items: flex-start; }
+.step:last-child { border-bottom: none; }
+.step-n { font-size: 10px; font-weight: 700; min-width: 18px; padding-top: 2px; font-family: 'DM Mono', monospace; }
+.step-n.ml { color: var(--ml-text); } .step-n.ai { color: var(--ai-text); } .step-n.sg { color: var(--sg-text); } .step-n.an { color: var(--an-text); }
+.step strong { color: var(--tx); font-weight: 600; }
+
+/* DELIVERABLES */
+.deliverables { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.deliverables li { display: flex; gap: 9px; font-size: 13px; color: var(--tm); align-items: flex-start; line-height: 1.55; }
+.del-dot { width: 7px; height: 7px; min-width: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.del-dot.ml { background: var(--snow); } .del-dot.ai { background: #7C3AED; } .del-dot.sg { background: #059669; } .del-dot.an { background: #EA580C; }
+
+/* DATASET BLOCK */
+.ds-block { background: var(--bg2); border: 1px solid var(--bd); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.ds-row { display: flex; gap: 8px; font-size: 13px; align-items: flex-start; }
+.ds-arrow { color: var(--snow); font-size: 11px; flex-shrink: 0; margin-top: 3px; font-weight: 700; }
+.ds-row a { color: var(--snow); line-height: 1.4; font-weight: 500; }
+.ds-sub { display: block; font-size: 11px; color: var(--tl); margin-top: 2px; }
+.ds-hint { display: inline-block; font-size: 11px; color: var(--sg-text); background: var(--sg-bg); border: 1px solid var(--sg-border); border-radius: 5px; padding: 2px 8px; margin-top: 4px; font-weight: 500; font-family: 'DM Mono', monospace; }
+.mkt-pill { display: inline-flex; align-items: center; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: var(--ml-bg); color: var(--ml-text); border: 1px solid var(--ml-border); margin-left: 5px; text-transform: uppercase; letter-spacing: 0.06em; vertical-align: middle; }
+
+/* DOC CHIPS */
+.doc-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 14px; border-top: 1px solid var(--bd); }
+.doc-chip { font-size: 11px; padding: 3px 10px; border-radius: 6px; background: var(--snow-lt); border: 1px solid var(--ml-border); color: var(--ml-text); font-weight: 500; }
+.doc-chip a { color: var(--ml-text); }
+
+/* CODE BLOCK */
+.code-block { background: #0D1117; border-radius: 10px; padding: 16px 18px; margin-top: 2px; overflow-x: auto; }
+.code-block pre { font-family: 'DM Mono', monospace; font-size: 11.5px; color: #79C0FF; line-height: 1.8; white-space: pre; }
+.code-block .comment { color: #6E7681; }
+.code-block .kw { color: #FF7B72; }
+.code-block .str { color: #A5D6FF; }
+.code-block .fn { color: #D2A8FF; }
+
+/* HINTS BLOCK */
+.hints-block { background: #F0FDF4; border: 1px solid var(--sg-border); border-radius: 10px; padding: 14px 16px; }
+.hint-item { display: flex; gap: 8px; font-size: 12.5px; color: #166534; line-height: 1.55; padding: 4px 0; }
+.hint-dot { font-size: 14px; flex-shrink: 0; margin-top: 0px; }
+
+/* ANALYTICS DATA BLOCK */
+.data-info { background: var(--bg2); border: 1px solid var(--bd); border-radius: 10px; padding: 14px 16px; }
+.data-info-row { display: flex; gap: 8px; font-size: 12.5px; color: var(--tm); line-height: 1.55; padding: 4px 0; border-bottom: 1px solid var(--bd); align-items: flex-start; }
+.data-info-row:last-child { border-bottom: none; }
+.data-key { font-weight: 600; color: var(--tx); min-width: 70px; flex-shrink: 0; font-family: 'DM Mono', monospace; font-size: 11px; margin-top: 2px; }
+
+/* POINTS BREAKDOWN */
+.pts-box { background: linear-gradient(135deg, #FEFCE8, #FEF9C3); border: 1.5px solid #FDE047; border-radius: 12px; padding: 18px 20px; }
+.pts-box-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--pts-text); font-weight: 700; margin-bottom: 12px; font-family: 'DM Mono', monospace; }
+.pts-rows { display: flex; flex-direction: column; gap: 6px; }
+.pts-row { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--tm); }
+.pts-row-name { flex: 1; }
+.pts-row-bar-wrap { flex: 1; background: #FEF08A; border-radius: 4px; height: 5px; margin: 0 10px; overflow: hidden; }
+.pts-row-bar { height: 100%; border-radius: 4px; background: #CA8A04; }
+.pts-row-val { font-weight: 700; color: var(--pts-text); font-family: 'DM Mono', monospace; font-size: 12px; min-width: 36px; text-align: right; }
+.pts-total { margin-top: 12px; padding-top: 10px; border-top: 1px solid #FDE047; display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; color: var(--pts-text); }
+
+/* GETTING STARTED */
+.setup-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.setup-card { background: var(--bg); border: 1px solid var(--bd); border-radius: 14px; padding: 22px; }
+.setup-num { width: 32px; height: 32px; border-radius: 50%; background: var(--snow); color: #fff; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+.setup-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.setup-desc { font-size: 13px; color: var(--tm); line-height: 1.65; }
+.setup-code { font-family: 'DM Mono', monospace; background: #0D1117; color: #79C0FF; border-radius: 8px; padding: 12px 14px; font-size: 11px; margin-top: 12px; line-height: 1.8; }
+
+/* JUDGING */
+.crit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+.crit-card { background: var(--bg); border: 1px solid var(--bd); border-radius: 14px; padding: 20px; text-align: center; border-top: 3px solid var(--snow); }
+.crit-pct { font-size: 28px; font-weight: 800; color: var(--snow); font-family: 'DM Mono', monospace; }
+.crit-name { font-size: 13px; font-weight: 700; margin: 6px 0 3px; }
+.crit-sub { font-size: 11px; color: var(--tl); font-family: 'DM Mono', monospace; }
+
+/* RULES */
+.rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.rc { background: var(--bg); border: 1px solid var(--bd); border-radius: 14px; padding: 22px; }
+.rc h3 { font-size: 14px; font-weight: 700; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--bd); }
+.rc ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.rc li { font-size: 13px; color: var(--tm); display: flex; gap: 9px; align-items: flex-start; line-height: 1.6; }
+.rc li::before { content: '→'; color: var(--snow); font-weight: 700; flex-shrink: 0; font-family: 'DM Mono', monospace; }
+
+/* RESOURCES */
+.res-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+.res-card { background: var(--bg); border: 1px solid var(--bd); border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; transition: border-color .15s, box-shadow .15s; }
+.res-card:hover { border-color: var(--snow); box-shadow: 0 0 0 3px rgba(0,147,238,0.08); text-decoration: none; }
+.res-icon { width: 40px; height: 40px; background: var(--snow-lt); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.res-name { font-size: 13px; font-weight: 700; color: var(--snow); }
+.res-sub { font-size: 11px; color: var(--tl); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+/* CTA */
+.cta-section { background: var(--dark); color: #fff; padding: 72px 48px; display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+.cta-title { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+.cta-sub { color: rgba(255,255,255,0.38); font-size: 14px; font-family: 'DM Mono', monospace; }
+
+/* FOOTER */
+.footer { background: #040A10; color: rgba(255,255,255,0.25); text-align: center; padding: 28px 48px; font-size: 12px; font-family: 'DM Mono', monospace; }
+.footer a { color: rgba(255,255,255,0.35); }
+
+/* DIVIDER BETWEEN ML AND ANALYTICS */
+.track-divider { border: none; border-top: 2px dashed var(--bd); margin: 56px 0; }
+
+/* RESPONSIVE */
+@media (max-width: 960px) { .ov-grid { grid-template-columns: repeat(3, 1fr); } .setup-steps { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 820px) { .prompts-grid { grid-template-columns: 1fr; } .pc-body-wide { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .rules-grid { grid-template-columns: 1fr; } .hero-meta { gap: 24px; } }
+@media (max-width: 600px) {
+  .hero { padding: 52px 24px 44px; }
+  .wrap { padding: 0 24px; }
+  .section { padding: 52px 0; }
+  .ov-grid { grid-template-columns: repeat(2, 1fr); }
+  .cta-section { padding: 52px 24px; flex-direction: column; align-items: flex-start; }
+  .footer { padding: 24px; }
+  .nav-bar { padding: 0 24px; }
+  .setup-steps { grid-template-columns: 1fr; }
+  .timer-banner { padding: 14px 24px; flex-wrap: wrap; text-align: center; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<div class="hero">
+  <div class="hero-grid-overlay"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <div class="hero-badge"><span class="hero-badge-dot"></span>Hackathon in Progress</Progress></div>
+      <span class="hero-org">TAMU CSEGSA × Snowflake</span>
+    </div>
+    <h1>Build on <span class="acc-snow">Snowflake.</span><br>Hack the <span class="acc-purple">Future.</span></h1>
+    <p class="hero-sub">ML, AI & Analytics — 11 challenge prompts across two tracks, all running natively on Snowflake. 24 hours. One winner.</p>
+    <div class="hero-meta">
+      <div class="hmi"><div class="hmi-label">Event Date</div><div class="hmi-val">April 9 – 10, 2026</div></div>
+      <div class="hmi"><div class="hmi-label">Duration</div><div class="hmi-val highlight">24 Hours</div></div>
+      <div class="hmi"><div class="hmi-label">Format</div><div class="hmi-val">Hybrid / Online</div></div>
+      <div class="hmi"><div class="hmi-label">Team Size</div><div class="hmi-val">2 – 4 Members</div></div>
+      <div class="hmi"><div class="hmi-label">Tracks</div><div class="hmi-val">ML/AI + Analytics</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER BANNER -->
+<div class="timer-banner">
+  <span class="timer-icon">⏱</span>
+  <span>You have</span>
+  <span class="timer-accent">24 HOURS</span>
+  <span>to build, submit, and present — starting at kickoff on April 9, 2026</span>
+</div>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav class="nav-bar">
+  <div class="nav-inner">
+    <a class="nav-link" href="#overview">Overview</a>
+    <span class="nav-sep">·</span>
+    <a class="nav-link" href="#ml-track">ML &amp; AI Track</a>
+    <span class="nav-sep">·</span>
+    <a class="nav-link" href="#analytics-track">Analytics Track</a>
+    <span class="nav-sep">·</span>
+    <a class="nav-link" href="#setup">Setup</a>
+    <span class="nav-sep">·</span>
+    <a class="nav-link" href="#judging">Judging</a>
+    <span class="nav-sep">·</span>
+    <a class="nav-link" href="#rules">Rules</a>
+    <span class="nav-sep">·</span>
+    <a class="nav-link" href="#resources">Resources</a>
+  </div>
+</nav>
+
+<!-- ═══════════════ OVERVIEW ═══════════════ -->
+<div class="section" id="overview">
+  <div class="wrap">
+    <div class="sec-eyebrow">At a Glance</div>
+    <div class="sec-title">Two tracks. Eleven challenges. One platform.</div>
+    <p class="sec-desc">Pick one prompt from either the ML &amp; AI track or the Analytics track and build your best solution in 24 hours. All datasets are free on the Snowflake Marketplace. Every submission runs natively inside Snowflake — no external compute, no third-party APIs.</p>
+    <div class="ov-grid">
+      <div class="ov-card"><div class="ov-icon">❄️</div><div class="ov-label">Platform</div><div class="ov-value">Snowflake Cloud</div></div>
+      <div class="ov-card"><div class="ov-icon">🤖</div><div class="ov-label">AI Stack</div><div class="ov-value">Cortex + ML APIs</div></div>
+      <div class="ov-card"><div class="ov-icon">🗂️</div><div class="ov-label">Datasets</div><div class="ov-value">Marketplace (free)</div></div>
+      <div class="ov-card"><div class="ov-icon">⏱️</div><div class="ov-label">Duration</div><div class="ov-value" style="color:var(--snow)">24 Hours</div></div>
+      <div class="ov-card"><div class="ov-icon">🏆</div><div class="ov-label">Judging Criteria</div><div class="ov-value">5 Dimensions</div></div>
+    </div>
+
+    <div style="margin-top: 32px;">
+      <div class="ds-note">
+        <span class="ds-note-icon">⭐</span>
+        <div><strong>Points per problem:</strong> Each challenge carries a point value shown on the problem card. Points reflect technical depth and complexity. Your final score = judging rubric score × problem point weight. Choose wisely — a harder problem attempted well beats an easy problem done poorly.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ML & AI TRACK
+════════════════════════════════════════════════════════════ -->
+<div class="section alt" id="ml-track">
+  <div class="wrap">
+    <div class="sec-eyebrow">Track 1 of 2</div>
+    <div class="sec-title">ML &amp; AI Track</div>
+    <p class="sec-desc">Three tracks — Predictive ML, Generative AI, and AI for Social Good — all running natively on Snowflake. Every dataset is free on the Snowflake Marketplace.</p>
+
+    <div class="ds-note">
+      <span class="ds-note-icon">💡</span>
+      <div><strong>How to access free datasets:</strong> Log in to Snowflake → click <strong>Marketplace</strong> in the left nav → search by the dataset name shown in each green hint label → click <strong>Get</strong>. Data is instantly available as a shared database — no download or ETL needed.</div>
+    </div>
+
+    <!-- TRACK A: Machine Learning -->
+    <div class="track-section">
+      <div class="track-header">
+        <span class="track-badge ml">❄ Track A — Machine Learning</span>
+        <div class="track-line"></div>
+        <span class="track-count">3 prompts · Snowflake ML APIs</span>
+      </div>
+      <div class="prompts-grid">
+
+        <!-- ML 01 -->
+        <div class="pc ml">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num ml">ML Prompt 01</div><div class="pc-name">Retail demand forecasting with Snowflake ML</div></div>
+              <div class="pc-badges">
+                <span class="time-badge ml">⏱ 6 – 8 hrs</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Use the Snowflake ML Forecasting API on consumer spending data to predict product-category sales 14 days ahead. Register the model and surface predictions in a Streamlit dashboard.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Step-by-step scope</div>
+              <div class="steps">
+                <div class="step"><span class="step-n ml">1</span><div><strong>Load &amp; explore</strong> — Connect to Consumer Spending dataset. Profile key metrics and identify target time-series. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ml">2</span><div><strong>Feature engineering</strong> — Create lag features and rolling aggregates using Snowpark Python. Register in Feature Store. (~1.5 hrs)</div></div>
+                <div class="step"><span class="step-n ml">3</span><div><strong>Train &amp; evaluate</strong> — Fit Snowflake ML Forecasting model. Evaluate MAPE and RMSE across 10+ product categories. (~2 hrs)</div></div>
+                <div class="step"><span class="step-n ml">4</span><div><strong>Register &amp; serve</strong> — Log model in Snowflake Model Registry. Create a Snowpark UDF for inference. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ml">5</span><div><strong>Visualize</strong> — Build Streamlit in Snowflake app: forecast vs actuals with confidence intervals. (~1.5 hrs)</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Deliverables</div>
+              <ul class="deliverables">
+                <li><div class="del-dot ml"></div>Trained forecasting model in Snowflake Model Registry</li>
+                <li><div class="del-dot ml"></div>Snowpark UDF for real-time inference</li>
+                <li><div class="del-dot ml"></div>Streamlit app with forecast charts and evaluation metrics</li>
+                <li><div class="del-dot ml"></div>Snowflake Notebook with full walkthrough</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Free Marketplace datasets</div>
+              <div class="ds-block">
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=consumer*spending*foundation&amp;pricing=free__;Kys!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dRa824iUg$" target="_blank">Cybersyn — Consumer Spending Foundation <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Category-level retail spending signals by geography and time</span>
+                  <span class="ds-hint">🔍 Search: "consumer spending foundation"</span>
+                </div></div>
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=finance*economics&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTDDkwWiw$" target="_blank">Snowflake Data: Finance &amp; Economics <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Optional enrichment: economic indicators as demand covariates</span>
+                  <span class="ds-hint">🔍 Search: "finance economics" → pick Snowflake Data listing</span>
+                </div></div>
+              </div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth (Snowflake platform usage)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Model quality (MAPE, RMSE, evaluation rigor)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Real-world impact &amp; problem framing</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Presentation &amp; demo quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation &amp; creative platform use</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/modeling__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dS8iIfh0w$" target="_blank">ML Forecasting API</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/feature-store/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQcIDczaw$" target="_blank">Feature Store</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/model-registry/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQ7He9wTg$" target="_blank">Model Registry</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWhTyOOw$" target="_blank">Streamlit in Snowflake</a></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ML 02 -->
+        <div class="pc ml">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num ml">ML Prompt 02</div><div class="pc-name">Customer churn classification with SHAP explainability</div></div>
+              <div class="pc-badges">
+                <span class="time-badge ml">⏱ 6 – 8 hrs</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Train a binary churn classifier using Snowflake ML Classifiers on financial data. Explain predictions with SHAP values and surface results through an interactive Streamlit interface.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Step-by-step scope</div>
+              <div class="steps">
+                <div class="step"><span class="step-n ml">1</span><div><strong>Explore &amp; label</strong> — Load Finance &amp; Economics data. Define churn proxy labels based on account activity signals. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ml">2</span><div><strong>Feature engineering</strong> — Engineer behavioral features in Snowpark. Register to Feature Store. (~1.5 hrs)</div></div>
+                <div class="step"><span class="step-n ml">3</span><div><strong>Train &amp; cross-validate</strong> — Fit Snowflake ML Classifier. Evaluate precision, recall, F1, and AUC on held-out test split. (~2 hrs)</div></div>
+                <div class="step"><span class="step-n ml">4</span><div><strong>Explain with SHAP</strong> — Compute SHAP values via Model Registry explain API. Identify top churn drivers. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ml">5</span><div><strong>Deploy &amp; visualize</strong> — Register model. Build Streamlit app: churn scores, SHAP charts, segment breakdowns. (~1.5 hrs)</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Deliverables</div>
+              <ul class="deliverables">
+                <li><div class="del-dot ml"></div>Trained classifier in Model Registry with AUC ≥ 0.75</li>
+                <li><div class="del-dot ml"></div>SHAP feature importance report</li>
+                <li><div class="del-dot ml"></div>Streamlit app: churn scores per segment + explainability panel</li>
+                <li><div class="del-dot ml"></div>Snowflake Notebook with end-to-end pipeline</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Free Marketplace datasets</div>
+              <div class="ds-block">
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=finance*economics&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTDDkwWiw$" target="_blank">Snowflake Data: Finance &amp; Economics <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">US financial indicators, company metrics, and economic time-series</span>
+                  <span class="ds-hint">🔍 Search: "finance economics" → pick Snowflake Data listing</span>
+                </div></div>
+              </div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth (Snowflake platform usage)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Model quality (AUC, F1, SHAP rigor)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Real-world impact &amp; problem framing</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Presentation &amp; demo quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation &amp; creative platform use</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/modeling__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dS8iIfh0w$" target="_blank">ML Classifiers API</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/feature-store/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQcIDczaw$" target="_blank">Feature Store</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/model-registry/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQ7He9wTg$" target="_blank">Model Registry</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowpark/python/index__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQdauMImw$" target="_blank">Snowpark Python</a></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ML 03 -->
+        <div class="pc ml">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num ml">ML Prompt 03</div><div class="pc-name">Anomaly detection on financial time-series</div></div>
+              <div class="pc-badges">
+                <span class="time-badge ml">⏱ 6 – 8 hrs</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Apply the Snowflake ML Anomaly Detection API to economic indicator time-series to flag statistically significant outliers. Validate findings and surface alerts in a live Streamlit app.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Step-by-step scope</div>
+              <div class="steps">
+                <div class="step"><span class="step-n ml">1</span><div><strong>Data prep</strong> — Pull 5+ economic time-series. Normalize and resample to weekly frequency using Snowpark. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ml">2</span><div><strong>Baseline &amp; train</strong> — Fit Snowflake ML Anomaly Detection model per series. Tune sensitivity thresholds. (~2 hrs)</div></div>
+                <div class="step"><span class="step-n ml">3</span><div><strong>Validate findings</strong> — Cross-reference anomalies against known economic events. Document true positive rate. (~1.5 hrs)</div></div>
+                <div class="step"><span class="step-n ml">4</span><div><strong>Register &amp; score</strong> — Register model and run inference on 6-month holdout via Snowpark UDF. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ml">5</span><div><strong>Alert dashboard</strong> — Streamlit app: anomaly timeline, severity scores, series comparison. (~1.5 hrs)</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Deliverables</div>
+              <ul class="deliverables">
+                <li><div class="del-dot ml"></div>Trained anomaly detection model across 5+ economic series</li>
+                <li><div class="del-dot ml"></div>Validation report: detected vs known anomaly events</li>
+                <li><div class="del-dot ml"></div>Streamlit alert dashboard with severity scores and timeline</li>
+                <li><div class="del-dot ml"></div>Snowflake Notebook with pipeline and findings</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Free Marketplace datasets</div>
+              <div class="ds-block">
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=finance*economics&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTDDkwWiw$" target="_blank">Snowflake Data: Finance &amp; Economics <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">GDP, CPI, unemployment, stock prices, and 100+ US economic time-series</span>
+                  <span class="ds-hint">🔍 Search: "finance economics" → pick Snowflake Data listing</span>
+                </div></div>
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=COVID-19*epidemiological&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWZwqoOQ$" target="_blank">Starschema — COVID-19 Epidemiological Data <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Optional: known-event overlay for anomaly validation</span>
+                  <span class="ds-hint">🔍 Search: "COVID-19 epidemiological"</span>
+                </div></div>
+              </div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth (Snowflake platform usage)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Model quality (validation rigor, true positive rate)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Real-world impact &amp; problem framing</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Presentation &amp; demo quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation &amp; creative platform use</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/modeling__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dS8iIfh0w$" target="_blank">Anomaly Detection API</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/model-registry/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQ7He9wTg$" target="_blank">Model Registry</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowpark/python/index__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQdauMImw$" target="_blank">Snowpark Python</a></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TRACK B: Generative AI -->
+    <div class="track-section">
+      <div class="track-header">
+        <span class="track-badge ai">✦ Track B — Generative AI</span>
+        <div class="track-line"></div>
+        <span class="track-count">2 prompts · Snowflake Cortex</span>
+      </div>
+      <div class="prompts-grid">
+
+        <!-- AI 01 -->
+        <div class="pc ai">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num ai">AI Prompt 01</div><div class="pc-name">RAG-powered economic intelligence assistant</div></div>
+              <div class="pc-badges">
+                <span class="time-badge ai">⏱ 6 – 8 hrs</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Build a retrieval-augmented generation pipeline over financial and government datasets using Cortex Search and Arctic Embed. Users ask plain-English questions; the system returns grounded, cited answers.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Step-by-step scope</div>
+              <div class="steps">
+                <div class="step"><span class="step-n ai">1</span><div><strong>Ingest &amp; chunk</strong> — Load Finance &amp; Economics and Government data. Chunk text fields into semantic passages using Snowpark. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ai">2</span><div><strong>Embed &amp; index</strong> — Generate embeddings using Arctic Embed. Create and configure Cortex Search service over the corpus. (~1.5 hrs)</div></div>
+                <div class="step"><span class="step-n ai">3</span><div><strong>Build the RAG chain</strong> — Implement retrieval + generation using Cortex Search + COMPLETE(). Add source citation to every answer. (~2 hrs)</div></div>
+                <div class="step"><span class="step-n ai">4</span><div><strong>Evaluate quality</strong> — Build a 20-question ground-truth eval set. Measure retrieval precision and answer faithfulness. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ai">5</span><div><strong>Deploy UI</strong> — Streamlit in Snowflake chat interface with conversation history and source citation panel. (~1.5 hrs)</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Deliverables</div>
+              <ul class="deliverables">
+                <li><div class="del-dot ai"></div>Cortex Search service over Marketplace data corpus</li>
+                <li><div class="del-dot ai"></div>RAG pipeline with cited answers (COMPLETE + Search)</li>
+                <li><div class="del-dot ai"></div>Ground-truth evaluation report (20+ Q&amp;A pairs)</li>
+                <li><div class="del-dot ai"></div>Streamlit chat UI with source citation panel</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Free Marketplace datasets</div>
+              <div class="ds-block">
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=finance*economics&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTDDkwWiw$" target="_blank">Snowflake Data: Finance &amp; Economics <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Rich structured + text fields ideal for a RAG corpus</span>
+                  <span class="ds-hint">🔍 Search: "finance economics"</span>
+                </div></div>
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=government*essentials&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTjM1DYDg$" target="_blank">Cybersyn — Government Essentials <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Federal agency reports and public policy documents</span>
+                  <span class="ds-hint">🔍 Search: "government essentials"</span>
+                </div></div>
+              </div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth (Snowflake platform usage)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">RAG quality (precision, faithfulness, citation)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Real-world impact &amp; problem framing</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Presentation &amp; demo quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation &amp; creative platform use</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dRGJH_Erw$" target="_blank">Cortex Search</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/arctic-embed__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTibLEesQ$" target="_blank">Arctic Embed</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dT2as_E_g$" target="_blank">Cortex COMPLETE</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWhTyOOw$" target="_blank">Streamlit in Snowflake</a></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 02 -->
+        <div class="pc ai">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num ai">AI Prompt 02</div><div class="pc-name">Conversational BI with Cortex Analyst</div></div>
+              <div class="pc-badges">
+                <span class="time-badge ai">⏱ 6 – 8 hrs</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Build a natural language analytics interface using Cortex Analyst. Users ask business questions in plain English; your app returns SQL-backed charts, summaries, and insights — zero SQL required from the end user.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Step-by-step scope</div>
+              <div class="steps">
+                <div class="step"><span class="step-n ai">1</span><div><strong>Model definition</strong> — Author a semantic model YAML for Finance &amp; Economics data. Define measures, dimensions, and joins. (~1.5 hrs)</div></div>
+                <div class="step"><span class="step-n ai">2</span><div><strong>Cortex Analyst setup</strong> — Upload semantic model to stage. Connect to Cortex Analyst REST API and validate query generation. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ai">3</span><div><strong>Query testing</strong> — Test 15+ natural language questions. Document ambiguous cases. Refine the semantic model iteratively. (~1.5 hrs)</div></div>
+                <div class="step"><span class="step-n ai">4</span><div><strong>Add LLM summarization</strong> — Use Cortex COMPLETE() to generate executive-style narrative from query results. (~1 hr)</div></div>
+                <div class="step"><span class="step-n ai">5</span><div><strong>Build the interface</strong> — Streamlit app: chat input, result charts, SQL transparency panel, and narrative summaries. (~2 hrs)</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Deliverables</div>
+              <ul class="deliverables">
+                <li><div class="del-dot ai"></div>Validated Cortex Analyst semantic model (YAML)</li>
+                <li><div class="del-dot ai"></div>15+ tested NL query log with accuracy notes</li>
+                <li><div class="del-dot ai"></div>Streamlit chat BI app with charts, SQL panel, and LLM summaries</li>
+                <li><div class="del-dot ai"></div>Snowflake Notebook documenting modeling decisions</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Free Marketplace datasets</div>
+              <div class="ds-block">
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=finance*economics&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTDDkwWiw$" target="_blank">Snowflake Data: Finance &amp; Economics <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Rich metrics ideal for natural language analytics demos</span>
+                  <span class="ds-hint">🔍 Search: "finance economics"</span>
+                </div></div>
+                <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                  <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=company*relationship&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dRWXOX3JQ$" target="_blank">Cybersyn — Company Relationship Graph <span class="mkt-pill">free</span></a>
+                  <span class="ds-sub">Structured entity + relationship data for complex multi-join queries</span>
+                  <span class="ds-hint">🔍 Search: "company relationship"</span>
+                </div></div>
+              </div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth (Snowflake platform usage)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Analyst quality (NL accuracy, semantic model depth)</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Real-world impact &amp; problem framing</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Presentation &amp; demo quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation &amp; creative platform use</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-analyst__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQQgHpg7Q$" target="_blank">Cortex Analyst</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dT2as_E_g$" target="_blank">Cortex COMPLETE</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWhTyOOw$" target="_blank">Streamlit in Snowflake</a></span>
+              <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-analyst__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQQgHpg7Q$" target="_blank">Semantic Model YAML</a></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TRACK C: AI for Social Good -->
+    <div class="track-section">
+      <div class="track-header">
+        <span class="track-badge sg">⬡ Track C — AI for Social Good</span>
+        <div class="track-line"></div>
+        <span class="track-count">1 prompt · ML + Cortex AI hybrid</span>
+      </div>
+      <div class="prompts-grid single">
+
+        <!-- SG 01 -->
+        <div class="pc sg">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num sg">Social Good Prompt 01</div><div class="pc-name">Public health trend intelligence — ML forecasting + Cortex AI</div></div>
+              <div class="pc-badges">
+                <span class="time-badge sg">⏱ 6 – 8 hrs</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Combine Snowflake ML Forecasting and Cortex LLM to build a public health intelligence system. Predict outbreak trajectory trends from epidemiological time-series and use Cortex to generate plain-English health summaries for non-technical decision makers.</p>
+          </div>
+          <div class="pc-body-wide">
+            <div class="pc-body-wide-col">
+              <div>
+                <div class="mini-label">Step-by-step scope</div>
+                <div class="steps">
+                  <div class="step"><span class="step-n sg">1</span><div><strong>Ingest &amp; profile</strong> — Load COVID-19 Epidemiological data. Profile case, death, and vaccination time-series across 10+ countries. (~1 hr)</div></div>
+                  <div class="step"><span class="step-n sg">2</span><div><strong>Feature engineering</strong> — Create rolling averages, doubling-time features, and vaccination rate lags in Snowpark. (~1 hr)</div></div>
+                  <div class="step"><span class="step-n sg">3</span><div><strong>Forecast with Snowflake ML</strong> — Train the ML Forecasting model per geography. Evaluate MAPE and generate 30-day forward projections. (~2 hrs)</div></div>
+                  <div class="step"><span class="step-n sg">4</span><div><strong>LLM summarization</strong> — Use Cortex COMPLETE() and SUMMARIZE() to generate plain-English outbreak narratives per country. (~1 hr)</div></div>
+                  <div class="step"><span class="step-n sg">5</span><div><strong>Dashboard</strong> — Streamlit app: forecast charts, risk tier classification, and auto-generated country health summaries. (~2 hrs)</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="pc-body-wide-col">
+              <div>
+                <div class="mini-label">Deliverables</div>
+                <ul class="deliverables">
+                  <li><div class="del-dot sg"></div>ML Forecasting model across 10+ country health series</li>
+                  <li><div class="del-dot sg"></div>Cortex-generated plain-English outbreak narratives per geography</li>
+                  <li><div class="del-dot sg"></div>Risk tier classification (low / moderate / high) from forecast outputs</li>
+                  <li><div class="del-dot sg"></div>Streamlit dashboard with forecast charts, tier map, and LLM summaries</li>
+                  <li><div class="del-dot sg"></div>Fairness note: document data gaps or geographic bias in the dataset</li>
+                </ul>
+              </div>
+              <div>
+                <div class="mini-label">Free Marketplace datasets</div>
+                <div class="ds-block">
+                  <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                    <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=COVID-19*epidemiological&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWZwqoOQ$" target="_blank">Starschema — COVID-19 Epidemiological Data <span class="mkt-pill">free</span></a>
+                    <span class="ds-sub">Global daily case, death, vaccination series — 180+ countries</span>
+                    <span class="ds-hint">🔍 Search: "COVID-19 epidemiological"</span>
+                  </div></div>
+                  <div class="ds-row"><span class="ds-arrow">↗</span><div>
+                    <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?search=government*essentials&amp;pricing=free__;Kw!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dTjM1DYDg$" target="_blank">Cybersyn — Government Essentials <span class="mkt-pill">free</span></a>
+                    <span class="ds-sub">Demographic and policy context for geographic risk modeling</span>
+                    <span class="ds-hint">🔍 Search: "government essentials"</span>
+                  </div></div>
+                </div>
+              </div>
+              <div class="pts-box">
+                <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+                <div class="pts-rows">
+                  <div class="pts-row"><span class="pts-row-name">Technical depth</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Model quality &amp; forecast accuracy</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Social impact &amp; framing</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Presentation &amp; demo</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Innovation</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+                </div>
+              </div>
+              <div class="doc-chips">
+                <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/modeling__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dS8iIfh0w$" target="_blank">ML Forecasting API</a></span>
+                <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dT2as_E_g$" target="_blank">Cortex COMPLETE &amp; SUMMARIZE</a></span>
+                <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/model-registry/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQ7He9wTg$" target="_blank">Model Registry</a></span>
+                <span class="doc-chip"><a href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWhTyOOw$" target="_blank">Streamlit in Snowflake</a></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ANALYTICS TRACK
+════════════════════════════════════════════════════════════ -->
+<div class="section" id="analytics-track">
+  <div class="wrap">
+    <div class="sec-eyebrow">Track 2 of 2</div>
+    <div class="sec-title">Analytics Track</div>
+    <p class="sec-desc">Five dashboard-focused challenges sponsored by Snowflake. Build a Streamlit in Snowflake app powered by SQL, Snowpark, and real CSV datasets you load directly into your Snowflake account.</p>
+
+    <div class="ds-note">
+      <span class="ds-note-icon">📊</span>
+      <div><strong>Analytics track note:</strong> Each problem comes with a starter code block and a provided CSV dataset. Load your CSV into Snowflake (see <a href="#setup">Getting Started</a>), paste the starter code into a new Streamlit app, then extend it with the required queries, charts, and filters.</div>
+    </div>
+
+    <div class="track-section">
+      <div class="track-header">
+        <span class="track-badge an">◈ Analytics Track — Dashboard Sprint</span>
+        <div class="track-line"></div>
+        <span class="track-count">5 problems · Snowflake SQL · Streamlit · Snowpark</span>
+      </div>
+      <div class="prompts-grid">
+
+        <!-- Analytics 01 -->
+        <div class="pc an">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num an">Analytics Problem 01</div><div class="pc-name">The Invisible Workforce Signal</div></div>
+              <div class="pc-badges">
+                <span class="time-badge an">⏱ 6-Hour Sprint</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">Organizations collect data on employee headcount, tenure, and performance — but rarely act on it before it's too late. Using the provided HR dataset, build a Snowflake-powered dashboard that helps a people manager answer: "Who on my team is at risk of leaving, and why?"</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Your solution should</div>
+              <ul class="deliverables">
+                <li><div class="del-dot an"></div>Calculate a simple attrition risk score per employee using tenure, performance rating, and months since last promotion</li>
+                <li><div class="del-dot an"></div>Classify each employee into a risk tier: High, Medium, or Low</li>
+                <li><div class="del-dot an"></div>Display a summary chart of risk distribution and a filterable employee table</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Deliverable</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">Output</span>Streamlit app with one chart, one filterable table, and a department filter</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Dataset provided</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">File</span>hr_attrition.csv — 300 rows</div>
+                <div class="data-info-row"><span class="data-key">Columns</span>employee_id, employee_name, department, manager_id, tenure_years, performance_rating, months_since_promotion, team_size, attrition_risk_label</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter hints</div>
+              <div class="hints-block">
+                <div class="hint-item"><span class="hint-dot">💡</span>A CASE statement in SQL is all you need to assign risk tiers — what thresholds make sense?</div>
+                <div class="hint-item"><span class="hint-dot">💡</span>What's the most useful chart for a manager: a pie chart of risk tiers, or a bar chart by department?</div>
+                <div class="hint-item"><span class="hint-dot">✨</span><strong>Bonus:</strong> highlight the top 5 highest-risk employees in your table</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter Code</div>
+              <div class="code-block"><pre><span class="kw">from</span> snowflake.snowpark.context <span class="kw">import</span> <span class="fn">get_active_session</span>
+<span class="kw">import</span> streamlit <span class="kw">as</span> st
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+session = <span class="fn">get_active_session</span>()
+st.<span class="fn">title</span>(<span class="str">"The Invisible Workforce Signal"</span>)
+df = session.<span class="fn">sql</span>(<span class="str">"SELECT * FROM HACKATHON.DATA.HR_ATTRITION"</span>).<span class="fn">to_pandas</span>()
+st.<span class="fn">subheader</span>(<span class="str">"Data Preview"</span>)
+st.<span class="fn">dataframe</span>(df.<span class="fn">head</span>())
+<span class="comment"># TODO: Add a department filter using st.selectbox</span>
+<span class="comment"># TODO: Add a bar chart of risk tier counts using st.bar_chart</span>
+<span class="comment"># TODO: Show a filtered table of high-risk employees</span></pre></div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation in scoring/tiering logic</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Impact &amp; real-world relevance</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Demo &amp; presentation</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Code quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip">Snowflake SQL</span>
+              <span class="doc-chip">Streamlit in Snowflake</span>
+              <span class="doc-chip">Snowpark Python</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics 02 -->
+        <div class="pc an">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num an">Analytics Problem 02</div><div class="pc-name">The Adoption Gap</div></div>
+              <div class="pc-badges">
+                <span class="time-badge an">⏱ 6-Hour Sprint</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">A company rolled out a new internal tool to 300 employees. Six months later, 75% have never come back after their first week. Build a dashboard that shows leadership which teams are thriving, which have gone dark, and what the overall adoption health looks like.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Your solution should</div>
+              <ul class="deliverables">
+                <li><div class="del-dot an"></div>Show Active vs. Churned user counts by team and org unit</li>
+                <li><div class="del-dot an"></div>Calculate the adoption rate (% Active) per team</li>
+                <li><div class="del-dot an"></div>Surface the top 3 best-performing and worst-performing teams</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Deliverable</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">Output</span>Streamlit app with a bar chart by team, summary metrics (total users, % active), and an org filter</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Dataset provided</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">File</span>user_adoption.csv — 300 rows</div>
+                <div class="data-info-row"><span class="data-key">Columns</span>user_id, team, org_unit, first_login_date, last_active_date, total_sessions, total_actions, status</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter hints</div>
+              <div class="hints-block">
+                <div class="hint-item"><span class="hint-dot">💡</span>GROUP BY team and COUNT users by status — that's your adoption rate foundation</div>
+                <div class="hint-item"><span class="hint-dot">💡</span>What makes a team "at risk" — low % active, or low total sessions among active users?</div>
+                <div class="hint-item"><span class="hint-dot">✨</span><strong>Bonus:</strong> flag teams where active users dropped off in the last 30 days using last_active_date</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter Code</div>
+              <div class="code-block"><pre><span class="kw">from</span> snowflake.snowpark.context <span class="kw">import</span> <span class="fn">get_active_session</span>
+<span class="kw">import</span> streamlit <span class="kw">as</span> st
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+session = <span class="fn">get_active_session</span>()
+st.<span class="fn">title</span>(<span class="str">"The Adoption Gap"</span>)
+df = session.<span class="fn">sql</span>(<span class="str">"SELECT * FROM HACKATHON.DATA.USER_ADOPTION"</span>).<span class="fn">to_pandas</span>()
+st.<span class="fn">subheader</span>(<span class="str">"Data Preview"</span>)
+st.<span class="fn">dataframe</span>(df.<span class="fn">head</span>())
+<span class="comment"># TODO: Add an org filter using st.selectbox</span>
+<span class="comment"># TODO: Query adoption rate per team with GROUP BY and show as bar chart</span>
+<span class="comment"># TODO: Show top 3 and bottom 3 teams by adoption rate</span></pre></div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation in adoption metrics</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Impact &amp; real-world relevance</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Demo &amp; presentation</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Code quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip">Snowflake SQL</span>
+              <span class="doc-chip">Streamlit in Snowflake</span>
+              <span class="doc-chip">Snowpark Python</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics 03 -->
+        <div class="pc an">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num an">Analytics Problem 03</div><div class="pc-name">Compliance at a Glance</div></div>
+              <div class="pc-badges">
+                <span class="time-badge an">⏱ 6-Hour Sprint</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">A legal team manages 150 contracts but has no single view of what's expiring, what's high-risk, or where the biggest financial exposure lies. Build a dashboard that gives a compliance officer instant visibility into their portfolio.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Your solution should</div>
+              <ul class="deliverables">
+                <li><div class="del-dot an"></div>Show contracts expiring in the next 30, 60, and 90 days</li>
+                <li><div class="del-dot an"></div>Filter contracts by risk level (High / Medium / Low)</li>
+                <li><div class="del-dot an"></div>Display total contract value at risk by category</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Deliverable</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">Output</span>Streamlit app with a deadline breakdown, risk filter, and a category value summary</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Dataset provided</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">File</span>contract_metadata.csv — 150 rows</div>
+                <div class="data-info-row"><span class="data-key">Columns</span>contract_id, vendor_name, category, contract_value_usd, start_date, end_date, governing_law, liability_cap_usd, auto_renews, risk_flags, risk_level, owner_team</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter hints</div>
+              <div class="hints-block">
+                <div class="hint-item"><span class="hint-dot">💡</span>DATEDIFF('day', CURRENT_DATE(), end_date) gives you days until expiry — use that to build your 30/60/90 buckets</div>
+                <div class="hint-item"><span class="hint-dot">💡</span>SUM(contract_value_usd) GROUP BY category shows where the money is concentrated</div>
+                <div class="hint-item"><span class="hint-dot">✨</span><strong>Bonus:</strong> flag contracts that auto-renew and are expiring within 60 days</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter Code</div>
+              <div class="code-block"><pre><span class="kw">from</span> snowflake.snowpark.context <span class="kw">import</span> <span class="fn">get_active_session</span>
+<span class="kw">import</span> streamlit <span class="kw">as</span> st
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+session = <span class="fn">get_active_session</span>()
+st.<span class="fn">title</span>(<span class="str">"Compliance at a Glance"</span>)
+df = session.<span class="fn">sql</span>(<span class="str">"SELECT * FROM HACKATHON.DATA.CONTRACT_METADATA"</span>).<span class="fn">to_pandas</span>()
+st.<span class="fn">subheader</span>(<span class="str">"Data Preview"</span>)
+st.<span class="fn">dataframe</span>(df.<span class="fn">head</span>())
+<span class="comment"># TODO: Add a risk level filter using st.selectbox or st.multiselect</span>
+<span class="comment"># TODO: Query contracts expiring in next 30/60/90 days using DATEDIFF</span>
+<span class="comment"># TODO: Show total value by category using SUM + GROUP BY</span></pre></div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation in risk visualization</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Impact &amp; real-world relevance</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Demo &amp; presentation</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Code quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip">Snowflake SQL</span>
+              <span class="doc-chip">Streamlit in Snowflake</span>
+              <span class="doc-chip">Snowpark Python</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics 04 -->
+        <div class="pc an">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num an">Analytics Problem 04</div><div class="pc-name">Who Can See What?</div></div>
+              <div class="pc-badges">
+                <span class="time-badge an">⏱ 6-Hour Sprint</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">A data governance team needs to understand who has access to which data — and whether that access is actually being used. Build a dashboard that surfaces the most over-privileged users, tables with no owner, and access that has gone stale.</p>
+          </div>
+          <div class="pc-body">
+            <div>
+              <div class="mini-label">Your solution should</div>
+              <ul class="deliverables">
+                <li><div class="del-dot an"></div>Rank users by number of distinct tables accessed</li>
+                <li><div class="del-dot an"></div>List tables with no documented owner that have been queried</li>
+                <li><div class="del-dot an"></div>Flag user-table pairs where query_count_30d is 0 (access granted but never used)</li>
+              </ul>
+            </div>
+            <div>
+              <div class="mini-label">Deliverable</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">Output</span>Streamlit app with a user access ranking, unowned tables list, and a role filter</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Dataset provided</div>
+              <div class="data-info">
+                <div class="data-info-row"><span class="data-key">File</span>access_logs.csv — 333 rows</div>
+                <div class="data-info-row"><span class="data-key">Columns</span>user_id, role, table_name, table_owner, last_accessed_date, query_count_30d</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter hints</div>
+              <div class="hints-block">
+                <div class="hint-item"><span class="hint-dot">💡</span>COUNT(DISTINCT table_name) GROUP BY user_id gives you your access breadth ranking</div>
+                <div class="hint-item"><span class="hint-dot">💡</span>WHERE table_owner IS NULL OR table_owner = '' finds unowned tables</div>
+                <div class="hint-item"><span class="hint-dot">✨</span><strong>Bonus:</strong> which role has the broadest average access across users?</div>
+              </div>
+            </div>
+            <div>
+              <div class="mini-label">Starter Code</div>
+              <div class="code-block"><pre><span class="kw">from</span> snowflake.snowpark.context <span class="kw">import</span> <span class="fn">get_active_session</span>
+<span class="kw">import</span> streamlit <span class="kw">as</span> st
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+session = <span class="fn">get_active_session</span>()
+st.<span class="fn">title</span>(<span class="str">"Who Can See What?"</span>)
+df = session.<span class="fn">sql</span>(<span class="str">"SELECT * FROM HACKATHON.DATA.ACCESS_LOGS"</span>).<span class="fn">to_pandas</span>()
+st.<span class="fn">subheader</span>(<span class="str">"Data Preview"</span>)
+st.<span class="fn">dataframe</span>(df.<span class="fn">head</span>())
+<span class="comment"># TODO: Add a role filter using st.selectbox</span>
+<span class="comment"># TODO: Query COUNT(DISTINCT table_name) per user and show as ranked table</span>
+<span class="comment"># TODO: Show rows where table_owner is empty (unowned tables)</span>
+<span class="comment"># TODO: Show rows where query_count_30d = 0 (stale access)</span></pre></div>
+            </div>
+            <div class="pts-box">
+              <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+              <div class="pts-rows">
+                <div class="pts-row"><span class="pts-row-name">Technical depth</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Innovation in governance insights</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Impact &amp; real-world relevance</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Demo &amp; presentation</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                <div class="pts-row"><span class="pts-row-name">Code quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+              </div>
+            </div>
+            <div class="doc-chips">
+              <span class="doc-chip">Snowflake SQL</span>
+              <span class="doc-chip">Streamlit in Snowflake</span>
+              <span class="doc-chip">Snowpark Python</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics 05 -->
+        <div class="pc an" style="grid-column: 1 / -1;">
+          <div class="pc-head">
+            <div class="pc-meta">
+              <div><div class="pc-num an">Analytics Problem 05</div><div class="pc-name">The Engagement Gap</div></div>
+              <div class="pc-badges">
+                <span class="time-badge an">⏱ 6-Hour Sprint</span>
+                <span class="pts-badge"><span class="pts-star">⭐</span> 100 pts</span>
+              </div>
+            </div>
+            <p class="pc-desc">A SaaS company tracks how its users interact with its platform each week — but the data sits in a table that no one looks at. Build a dashboard that helps a customer success team understand which teams are most engaged, which are falling behind, and who their top users are.</p>
+          </div>
+          <div class="pc-body-wide">
+            <div class="pc-body-wide-col">
+              <div>
+                <div class="mini-label">Your solution should</div>
+                <ul class="deliverables">
+                  <li><div class="del-dot an"></div>Rank teams by average engagement score</li>
+                  <li><div class="del-dot an"></div>Show engagement score trend over 13 weeks for the top and bottom team</li>
+                  <li><div class="del-dot an"></div>Display a leaderboard of the top 10 users by total sessions</li>
+                </ul>
+              </div>
+              <div>
+                <div class="mini-label">Deliverable</div>
+                <div class="data-info">
+                  <div class="data-info-row"><span class="data-key">Output</span>Streamlit app with a team ranking table, a weekly trend chart, and a user leaderboard</div>
+                </div>
+              </div>
+              <div>
+                <div class="mini-label">Dataset provided</div>
+                <div class="data-info">
+                  <div class="data-info-row"><span class="data-key">File</span>engagement_logs.csv — 828 rows</div>
+                  <div class="data-info-row"><span class="data-key">Columns</span>user_id, team, org_unit, week_start, session_count, engagement_score, category</div>
+                </div>
+              </div>
+            </div>
+            <div class="pc-body-wide-col">
+              <div>
+                <div class="mini-label">Starter hints</div>
+                <div class="hints-block">
+                  <div class="hint-item"><span class="hint-dot">💡</span>AVG(engagement_score) GROUP BY team orders teams by engagement — start here</div>
+                  <div class="hint-item"><span class="hint-dot">💡</span>Filter to just your top and bottom team, then plot engagement_score by week_start</div>
+                  <div class="hint-item"><span class="hint-dot">✨</span><strong>Bonus:</strong> which category (Dashboard, Reports, etc.) drives the highest engagement scores?</div>
+                </div>
+              </div>
+              <div>
+                <div class="mini-label">Starter Code</div>
+                <div class="code-block"><pre><span class="kw">from</span> snowflake.snowpark.context <span class="kw">import</span> <span class="fn">get_active_session</span>
+<span class="kw">import</span> streamlit <span class="kw">as</span> st
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+session = <span class="fn">get_active_session</span>()
+st.<span class="fn">title</span>(<span class="str">"The Engagement Gap"</span>)
+df = session.<span class="fn">sql</span>(<span class="str">"SELECT * FROM HACKATHON.DATA.ENGAGEMENT_LOGS"</span>).<span class="fn">to_pandas</span>()
+st.<span class="fn">subheader</span>(<span class="str">"Data Preview"</span>)
+st.<span class="fn">dataframe</span>(df.<span class="fn">head</span>())
+<span class="comment"># TODO: Query AVG(engagement_score) GROUP BY team and display as bar chart</span>
+<span class="comment"># TODO: Filter to top and bottom team, plot engagement_score over week_start</span>
+<span class="comment"># TODO: Query SUM(session_count) per user, show top 10 as a leaderboard</span></pre></div>
+              </div>
+              <div class="pts-box">
+                <div class="pts-box-title">Points Breakdown — 100 pts total</div>
+                <div class="pts-rows">
+                  <div class="pts-row"><span class="pts-row-name">Technical depth</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:30%"></div></div><span class="pts-row-val">30 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Innovation in engagement analytics</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:25%"></div></div><span class="pts-row-val">25 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Impact &amp; real-world relevance</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:20%"></div></div><span class="pts-row-val">20 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Demo &amp; presentation</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:15%"></div></div><span class="pts-row-val">15 pts</span></div>
+                  <div class="pts-row"><span class="pts-row-name">Code quality</span><div class="pts-row-bar-wrap"><div class="pts-row-bar" style="width:10%"></div></div><span class="pts-row-val">10 pts</span></div>
+                </div>
+              </div>
+              <div class="doc-chips">
+                <span class="doc-chip">Snowflake SQL</span>
+                <span class="doc-chip">Streamlit in Snowflake</span>
+                <span class="doc-chip">Snowpark Python</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ANALYTICS SETUP ═══════════════ -->
+<div class="section alt" id="setup">
+  <div class="wrap">
+    <div class="sec-eyebrow">Getting Started</div>
+    <div class="sec-title">Analytics Track — Snowflake Setup</div>
+    <p class="sec-desc">Three steps to get your Analytics track environment running. Complete this before writing any code.</p>
+    <div class="setup-steps">
+      <div class="setup-card">
+        <div class="setup-num">1</div>
+        <div class="setup-title">Create your database and schema</div>
+        <div class="setup-desc">Log in to your Snowflake account. Open a new Worksheet and run the commands below to set up your hackathon environment.</div>
+        <div class="setup-code">CREATE DATABASE IF NOT EXISTS HACKATHON;<br>CREATE SCHEMA IF NOT EXISTS HACKATHON.DATA;</div>
+      </div>
+      <div class="setup-card">
+        <div class="setup-num">2</div>
+        <div class="setup-title">Load your CSV file</div>
+        <div class="setup-desc">In the left sidebar, go to <strong>Data → Add Data → Load data into a Table</strong>. Upload your CSV, select database HACKATHON and schema DATA. Snowflake will auto-detect column types. Repeat for each CSV your problem requires.</div>
+        <div class="setup-code">SELECT * FROM HACKATHON.DATA.HR_ATTRITION LIMIT 5;<br><span style="color:#6E7681">-- Replace table name to verify each CSV</span></div>
+      </div>
+      <div class="setup-card">
+        <div class="setup-num">3</div>
+        <div class="setup-title">Create your Streamlit app</div>
+        <div class="setup-desc">Go to <strong>Projects → Streamlit → + Streamlit App</strong>. Select database HACKATHON, schema DATA, and your warehouse. Paste the Starter Code from your problem, then click Run to preview.</div>
+        <div class="setup-code" style="font-size:10.5px">Name: your_app_name<br>Database: HACKATHON<br>Schema: DATA<br>Warehouse: &lt;your warehouse&gt;</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ JUDGING ═══════════════ -->
+<div class="section" id="judging">
+  <div class="wrap">
+    <div class="sec-eyebrow">Judging</div>
+    <div class="sec-title">How you'll be scored</div>
+    <p class="sec-desc">Submissions are evaluated across five dimensions by a panel of Snowflake engineers and industry practitioners. Criteria are identical across both tracks — the weight given to "Model quality" applies to both ML models and analytics logic depth.</p>
+    <div class="crit-grid">
+      <div class="crit-card"><div class="crit-pct">30%</div><div class="crit-name">Technical Depth</div><div class="crit-sub">Snowflake platform usage</div></div>
+      <div class="crit-card"><div class="crit-pct">25%</div><div class="crit-name">Quality</div><div class="crit-sub">Accuracy and rigor</div></div>
+      <div class="crit-card"><div class="crit-pct">20%</div><div class="crit-name">Real-World Impact</div><div class="crit-sub">Problem framing</div></div>
+      <div class="crit-card"><div class="crit-pct">15%</div><div class="crit-name">Presentation</div><div class="crit-sub">Demo &amp; documentation</div></div>
+      <div class="crit-card"><div class="crit-pct">10%</div><div class="crit-name">Innovation</div><div class="crit-sub">Creative platform use</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ RULES ═══════════════ -->
+<div class="section alt" id="rules">
+  <div class="wrap">
+    <div class="sec-eyebrow">Submission Rules</div>
+    <div class="sec-title">Guidelines &amp; platform constraints</div>
+    <p class="sec-desc">Keep it Snowflake-native. Everything runs inside your trial account — no external compute, no third-party LLMs. All work must be created during the 24-hour window.</p>
+    <div class="rules-grid">
+      <div class="rc">
+        <h3>Submission requirements</h3>
+        <ul>
+          <li>All code committed to a public GitHub repo before the deadline</li>
+          <li>README with setup instructions, architecture diagram, and demo link required</li>
+          <li>All models and notebooks must run in the provided Snowflake trial account</li>
+          <li>3–5 minute video walkthrough is mandatory for all submissions</li>
+          <li>No pre-built solutions; all work must be created during the 24-hour window</li>
+        </ul>
+      </div>
+      <div class="rc">
+        <h3>Platform constraints</h3>
+        <ul>
+          <li>All ML training and inference must occur within Snowflake</li>
+          <li>External LLM APIs (OpenAI, Anthropic, etc.) are not permitted — Cortex only</li>
+          <li>ML &amp; AI track: data must come from the provided free Marketplace listings only</li>
+          <li>Analytics track: data must come from the provided CSV files only</li>
+          <li>Streamlit in Snowflake is the required UI layer for all deliverables</li>
+          <li>Open-source libraries permitted with attribution in the README</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ RESOURCES ═══════════════ -->
+<div class="section" id="resources">
+  <div class="wrap">
+    <div class="sec-eyebrow">Getting Started</div>
+    <div class="sec-title">Platform resources &amp; learning</div>
+    <p class="sec-desc">Everything below is free. Trial accounts include Marketplace access and Cortex credits. Start with Quickstarts — most prompts have a directly relevant guided tutorial.</p>
+    <div class="res-grid">
+      <a class="res-card" href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dRAASw1iQ$" target="_blank"><div class="res-icon">📘</div><div><div class="res-name">Snowflake ML Docs</div><div class="res-sub">Classifiers, Forecasters, Anomaly Detection</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dT2as_E_g$" target="_blank"><div class="res-icon">🧠</div><div><div class="res-name">Cortex LLM Functions</div><div class="res-sub">COMPLETE, SEARCH, ANALYST, AGENTS</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://quickstarts.snowflake.com/__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dRf_MCwUg$" target="_blank"><div class="res-icon">⚡</div><div><div class="res-name">Snowflake Quickstarts</div><div class="res-sub">Guided tutorials for every product</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?pricing=free__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dREDndPrg$" target="_blank"><div class="res-icon">🗂️</div><div><div class="res-name">Snowflake Marketplace</div><div class="res-sub">Browse all free datasets (filter: free)</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://learn.snowflake.com/__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dSp1HqvAA$" target="_blank"><div class="res-icon">🎓</div><div><div class="res-name">Snowflake University</div><div class="res-sub">Free courses and hands-on labs</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://docs.snowflake.com/en/user-guide/ui-snowsight-notebooks-create__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dT1sFDd2A$" target="_blank"><div class="res-icon">🔬</div><div><div class="res-name">Snowflake Notebooks</div><div class="res-sub">In-warehouse Python + SQL environment</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/feature-store/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQcIDczaw$" target="_blank"><div class="res-icon">🗄️</div><div><div class="res-name">Feature Store</div><div class="res-sub">Register, retrieve, and version features</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/snowflake-ml/model-registry/overview__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQ7He9wTg$" target="_blank"><div class="res-icon">📦</div><div><div class="res-name">Model Registry</div><div class="res-sub">Log, version, and serve trained models</div></div></a>
+      <a class="res-card" href="https://urldefense.com/v3/__https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQWhTyOOw$" target="_blank"><div class="res-icon">📊</div><div><div class="res-name">Streamlit in Snowflake</div><div class="res-sub">Build and deploy apps natively</div></div></a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ CTA ═══════════════ -->
+<div class="cta-section">
+  <div>
+    <div class="cta-title">Ready to compete?</div>
+    <div class="cta-sub">Reach out to your student representative to register your team — spots are limited</div>
+  </div>
+  <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:100px;padding:14px 28px;font-size:15px;font-weight:600;color:#fff;white-space:nowrap;">Contact your student representative</div>
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<div class="footer">
+  <p>TAMU CSEGSA × Snowflake Hackathon 2026 &nbsp;·&nbsp; April 9–10, 2026 &nbsp;·&nbsp; 24-Hour Sprint &nbsp;·&nbsp;
+  Marketplace datasets at <a href="https://urldefense.com/v3/__https://app.snowflake.com/marketplace?pricing=free__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dREDndPrg$" target="_blank">app.snowflake.com/marketplace</a> &nbsp;·&nbsp;
+  Platform docs at <a href="https://urldefense.com/v3/__https://docs.snowflake.com__;!!KwNVnqRv!HXV0z9f9AKe3K9jHgt1iuSmbkBzU8ZTgaDNg9ZnpGfCisSQXDqh3bHk_OtgcV0Pu4PhvxUVzEE5y8dQpTWbbqA$" target="_blank">docs.snowflake.com</a></p>
+</div>
+
+</body>
+</html>
