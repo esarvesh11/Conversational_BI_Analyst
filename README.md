@@ -1,3 +1,4 @@
+
 # 📊 US Labor Market Monitor
 
 A conversational BI application that lets anyone explore US labor market data
@@ -6,6 +7,7 @@ Cortex Analyst, Cortex COMPLETE, and Streamlit in Snowflake.
 
 🔗 **Live demo:** https://app.snowflake.com/streamlit/sfeducationservices7/jmb13357/#/apps/smkpfeiyiiq7qsgtx7v3
 
+<img width="1376" height="768" alt="Architectue_Image" src="https://github.com/user-attachments/assets/910b2181-734b-4dfb-8b4e-61554a831c13" />
 ---
 
 ## ✨ What It Does
