@@ -1,0 +1,990 @@
+﻿# =============================================================================
+# SEMANTIC MODEL: US Labor Market Monitor
+# =============================================================================
+# This file tells Cortex Analyst how to translate plain English questions
+# into correct SQL queries against our 3 tables.
+#
+# Upload this to a Snowflake Stage, then point your Streamlit app to it
+# when calling the Cortex Analyst API.
+# =============================================================================
+
+name: us_labor_market_monitor
+description: >
+  A conversational BI interface for exploring US labor market and economic
+  employment data from the Bureau of Labor Statistics (BLS). Users can ask
+  questions about unemployment, employment, wages, job openings, hiring,
+  quits, layoffs, and industry-level employment across all 50 US states
+  and nationally. Data is available at monthly and annual frequencies,
+  covering decades of economic history.
+
+
+# =============================================================================
+# CUSTOM INSTRUCTIONS â€” Global rules for correct SQL generation
+# =============================================================================
+custom_instructions: >
+  CRITICAL FILTERING RULES â€” apply these to EVERY query:
+
+  1. SEASONALLY_ADJUSTED FILTER (REQUIRED): Always include
+     `a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'` in the WHERE clause
+     unless the user explicitly requests seasonally adjusted data. Every BLS
+     measure exists in both 'Seasonally adjusted' and 'Not seasonally adjusted'
+     variants, so omitting this filter will produce duplicate rows (2x the
+     expected result count).
+
+  2. NATIONAL UNEMPLOYMENT RATE â€” DEMOGRAPHIC VARIABLES: At the national level
+     (GEO_NAME = 'United States'), the measure 'Unemployment Rate' includes
+     over 1,200 distinct variables representing demographic breakdowns by age,
+     race, and gender (e.g., "Unemployment Rate - 16-17 yrs., Asian").
+     To get just the headline national unemployment rate, add the filter:
+     `a.VARIABLE_NAME LIKE 'Current Labor Force: Unemployment Rate, Monthly%'`
+     This restriction is NOT needed for state-level queries, which have only
+     one variable per state per seasonal adjustment type.
+
+  3. WAGES/EARNINGS â€” INDUSTRY FILTER: Measures like 'Average Hourly Earnings
+     Of All Employees' and 'Average Weekly Earnings Of All Employees' exist
+     for multiple industries per state (~12 variants). To get the headline
+     wage figure, add `a.INDUSTRY = 'Total Private'` unless the user asks
+     about a specific industry.
+
+  4. DEFAULT FREQUENCY: When the user does not specify monthly or annual,
+     default to `a.FREQUENCY = 'Monthly'`.
+
+  5. ALWAYS JOIN ALL 3 TABLES: Every query should join timeseries -> attributes
+     (on VARIABLE) and timeseries -> geography_index (on GEO_ID) to access
+     measure metadata and human-readable place names.
+
+  6. PERCENT UNIT VALUES — MULTIPLY BY 100: Any measure with UNIT = 'Percent'
+     is stored in the data as a decimal fraction (e.g., 0.051 means 5.1%).
+     When returning these values, ALWAYS multiply by 100 in the SELECT clause
+     to display them as standard percentages.
+     Example: `SELECT t.VALUE * 100 AS unemployment_rate_pct, ...`
+     Measures that require this: 'Unemployment Rate', 'Labor Force
+     Participation Rate', 'Employment-Population Ratio', and any JOLTS
+     measure (Hires, Quits, Layoffs, Job Openings, Total Separations)
+     when the UNIT filter is set to 'Percent'.
+
+  7. JOLTS MEASURES — DEFAULT TO LEVEL UNIT: JOLTS measures (Job Openings,
+     Hires, Quits, Layoffs, Total Separations) exist in two UNIT variants:
+     'Level' (actual counts) and 'Percent' (rate as % of employment).
+     When the user asks about counts, numbers, or "how many" — add the
+     filter `a.UNIT = 'Level'`.
+     When the user asks about a "rate", "percentage", or "%" — add the
+     filter `a.UNIT = 'Percent'` AND multiply the value by 100 per rule #6.
+     Without a UNIT filter, queries will return both variants and produce
+     duplicate/mixed results.
+
+
+# =============================================================================
+# TABLES â€” Define each table, its columns, and what they mean
+# =============================================================================
+tables:
+
+  # ---------------------------------------------------------------------------
+  # TABLE 1: TIMESERIES (the fact table â€” where the actual numbers live)
+  # ---------------------------------------------------------------------------
+  # Each row = one data point: a VALUE for a specific VARIABLE, in a specific
+  # place (GEO_ID), on a specific DATE.
+  # ---------------------------------------------------------------------------
+  - name: timeseries
+    description: >
+      Fact table containing time series data points for US economic indicators.
+      Each row represents a single observation: a numeric VALUE recorded for
+      a specific economic variable (identified by VARIABLE), at a specific
+      geographic location (GEO_ID), on a specific date (DATE).
+      Join to the attributes table on VARIABLE to understand what each
+      variable measures. Join to geography_index on GEO_ID to get
+      human-readable place names like "California" or "United States".
+
+    base_table:
+      database: SNOWFLAKE_PUBLIC_DATA_FREE
+      schema: PUBLIC_DATA_FREE
+      table: FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES
+
+    # Filters restrict what data Cortex Analyst will query.
+    # We only want national + state level data, not counties/cities/metros.
+    filters:
+      - name: geo_scope
+        description: >
+          Restrict to US national and state-level data only.
+          GEO_ID = 'country/USA' for national data, or
+          GEO_ID like 'geoId/%' for US state/territory data.
+        expr: "GEO_ID = 'country/USA' OR GEO_ID LIKE 'geoId/%'"
+
+    dimensions:
+      - name: GEO_ID
+        synonyms:
+          - geographic id
+          - location code
+          - place code
+          - geography id
+        description: >
+          A unique identifier for a geographic location. Examples:
+          'country/USA' for the United States nationally,
+          'geoId/06' for California, 'geoId/48' for Texas.
+          This is a code â€” join to geography_index table to get the
+          human-readable name (like "California").
+        expr: GEO_ID
+        data_type: VARCHAR
+
+      - name: VARIABLE
+        synonyms:
+          - variable id
+          - indicator id
+          - series id
+        description: >
+          Unique identifier for an economic time series variable.
+          Join to the attributes table on this column to get the
+          measure name, industry, frequency, and other metadata.
+        expr: VARIABLE
+        data_type: VARCHAR
+
+      - name: VARIABLE_NAME
+        synonyms:
+          - indicator name
+          - series name
+          - variable description
+        description: >
+          Human-readable name of the economic variable. Contains
+          details about the specific series including the measure type,
+          geographic scope, industry sector, and frequency.
+        expr: VARIABLE_NAME
+        data_type: VARCHAR
+
+      - name: UNIT
+        synonyms:
+          - unit of measurement
+          - units
+          - measured in
+        description: >
+          The unit of measurement for the VALUE column. Common values:
+          'Percent' for rates and ratios,
+          'Persons' for counts of people,
+          'Count' for employee counts,
+          'USD' for dollar amounts (wages/earnings),
+          'Level' for absolute counts (job openings, hires, etc.).
+        expr: UNIT
+        data_type: VARCHAR
+        sample_values:
+          - Percent
+          - Persons
+          - Count
+          - USD
+          - Level
+
+    time_dimensions:
+      - name: DATE
+        synonyms:
+          - date
+          - time
+          - period
+          - month
+          - year
+          - when
+          - time period
+          - observation date
+        description: >
+          The date of the observation. For monthly data, this is the
+          last day of the month (e.g., 2024-01-31 for January 2024).
+          For annual data, this is December 31 of that year
+          (e.g., 2024-12-31 for the year 2024).
+        expr: DATE
+        data_type: DATE
+
+    facts:
+      - name: VALUE
+        synonyms:
+          - value
+          - amount
+          - number
+          - figure
+          - data point
+          - metric value
+          - reading
+          - level
+          - rate
+          - count
+        description: >
+          The numeric value of the observation. What this number represents
+          depends on the MEASURE column in the attributes table:
+          - For 'Unemployment Rate': a percentage (e.g., 5.2 means 5.2%)
+          - For 'Employment' or 'Unemployment': count of persons
+          - For 'All Employees': count of employees in a sector
+          - For 'Average Hourly Earnings Of All Employees': USD per hour
+          - For 'Average Weekly Earnings Of All Employees': USD per week
+          - For 'Average Weekly Hours Of All Employees': hours per week
+          - For JOLTS measures (Job Openings, Hires, Quits, Layoffs):
+            either a count (Level) or a percentage (Percent)
+          Always join to the attributes table to know what VALUE means.
+        expr: VALUE
+        data_type: FLOAT
+
+
+  # ---------------------------------------------------------------------------
+  # TABLE 2: ATTRIBUTES (the dimension table â€” describes what each variable is)
+  # ---------------------------------------------------------------------------
+  # Each row = one unique VARIABLE. Tells you what it measures, which industry,
+  # how often it's reported, etc. This is the "dictionary" for the timeseries.
+  # ---------------------------------------------------------------------------
+  - name: attributes
+    description: >
+      Dimension table that describes each economic variable. One row per
+      unique VARIABLE. Use this to understand what a timeseries value
+      represents: what economic measure it tracks, which industry sector,
+      how frequently it is reported, whether it is seasonally adjusted,
+      and which government agency published it.
+      Join to timeseries on VARIABLE.
+
+    base_table:
+      database: SNOWFLAKE_PUBLIC_DATA_FREE
+      schema: PUBLIC_DATA_FREE
+      table: FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES
+
+    # We only use Bureau of Labor Statistics data
+    filters:
+      - name: bls_only
+        description: >
+          Restrict to Bureau of Labor Statistics data only.
+          This ensures consistent, high-quality labor market data.
+        expr: "RELEASE_SOURCE = 'Bureau of Labor Statistics'"
+
+      - name: not_seasonally_adjusted
+        description: >
+          Default to not seasonally adjusted data. Every BLS measure
+          exists in both 'Seasonally adjusted' and 'Not seasonally
+          adjusted' variants. Omitting this filter doubles the result
+          count. Only remove when user explicitly requests SA data.
+        expr: "SEASONALLY_ADJUSTED = 'Not seasonally adjusted'"
+
+      - name: monthly_frequency
+        description: >
+          Default to monthly frequency. Most BLS series are reported
+          monthly. Use 'Annual' only when the user explicitly asks
+          for yearly data.
+        expr: "FREQUENCY = 'Monthly'"
+
+    primary_key:
+      columns:
+        - VARIABLE
+
+    dimensions:
+      - name: VARIABLE
+        synonyms:
+          - variable id
+          - indicator id
+        description: >
+          Unique identifier for this variable. Join key to the
+          timeseries table.
+        expr: VARIABLE
+        data_type: VARCHAR
+
+      - name: VARIABLE_NAME
+        synonyms:
+          - indicator name
+          - full name
+          - series name
+        description: >
+          Human-readable full name of the variable, including
+          details about measure, industry, frequency, and
+          seasonal adjustment.
+        expr: VARIABLE_NAME
+        data_type: VARCHAR
+
+      - name: MEASURE
+        synonyms:
+          - metric
+          - indicator
+          - economic indicator
+          - measure name
+          - what is being measured
+          - data type
+          - statistic
+        description: >
+          The economic indicator being measured. This is the most
+          important filter column â€” it determines what the VALUE
+          in the timeseries table represents.
+
+          Labor Market Health measures:
+          - 'Unemployment Rate': Percentage of the labor force that is
+            unemployed. User might ask about: jobless rate, unemployment
+            percentage, unemployment %.
+          - 'Unemployment': Total count of unemployed persons. User might
+            ask about: number of unemployed, unemployed people, jobless count.
+          - 'Employment': Total count of employed persons. User might ask
+            about: number of employed, employed people, employment count.
+          - 'Labor Force': Total civilian labor force size (employed +
+            unemployed). User might ask about: workforce size, labor pool,
+            total workers.
+          - 'Labor Force Participation Rate': Percentage of working-age
+            population in the labor force. User might ask about:
+            participation rate, workforce participation, LFPR.
+          - 'Employment-Population Ratio': Percentage of working-age
+            population that is employed. User might ask about:
+            employment ratio, employment to population.
+
+          Wages and Hours measures:
+          IMPORTANT: Wages and Hours measures are only available at the
+          STATE level (GEO_NAME != 'United States'), not nationally. If a
+          user asks about national wages or hours, respond with state-level
+          data for the largest states or explain that this data is
+          state-level only.
+          - 'Average Hourly Earnings Of All Employees': Average hourly wage
+            in USD. State-level only. User might ask about: hourly wages,
+            hourly pay, hourly earnings, average wage, salary, pay rate,
+            compensation.
+          - 'Average Weekly Earnings Of All Employees': Average weekly wage
+            in USD. State-level only. User might ask about: weekly wages,
+            weekly pay, weekly earnings, weekly salary, weekly compensation.
+          - 'Average Weekly Hours Of All Employees': Average hours worked
+            per week. State-level only. User might ask about: work hours,
+            hours per week, weekly hours, how many hours, workweek length.
+
+          Employment by Industry:
+          - 'All Employees': Total employee count in a specific industry
+            sector. Use the INDUSTRY column to filter by sector. User
+            might ask about: jobs in manufacturing, employees in retail,
+            workers in healthcare, industry employment, sector employment,
+            nonfarm payrolls, payroll employment.
+
+          Job Dynamics (JOLTS - Job Openings and Labor Turnover Survey):
+          - 'Job Openings: All Size Classes': Number or rate of unfilled
+            job positions. User might ask about: job openings, open
+            positions, vacancies, available jobs, help wanted.
+          - 'Hires: All Size Classes': Number or rate of new hires.
+            User might ask about: hiring, new hires, people hired,
+            hiring rate, recruitment.
+          - 'Quits: All Size Classes': Number or rate of voluntary
+            separations. User might ask about: quits, people quitting,
+            resignations, voluntary turnover, quit rate, great resignation.
+          - 'Layoffs And Discharges: All Size Classes': Number or rate of
+            involuntary separations. User might ask about: layoffs,
+            firings, discharges, people laid off, job cuts, downsizing.
+          - 'Total Separations: All Size Classes': Total number or rate of
+            all separations (quits + layoffs + other). User might ask about:
+            total separations, people leaving, turnover, attrition.
+        expr: MEASURE
+        data_type: VARCHAR
+        sample_values:
+          - Unemployment Rate
+          - Unemployment
+          - Employment
+          - Labor Force
+          - Labor Force Participation Rate
+          - Employment-Population Ratio
+          - Average Hourly Earnings Of All Employees
+          - Average Weekly Earnings Of All Employees
+          - Average Weekly Hours Of All Employees
+          - All Employees
+          - "Job Openings: All Size Classes"
+          - "Hires: All Size Classes"
+          - "Quits: All Size Classes"
+          - "Layoffs And Discharges: All Size Classes"
+          - "Total Separations: All Size Classes"
+
+      - name: INDUSTRY
+        synonyms:
+          - sector
+          - industry sector
+          - business sector
+          - industry type
+          - economic sector
+          - field
+          - industry name
+        description: >
+          The industry or economic sector for the variable. This column
+          is most relevant when MEASURE = 'All Employees', where it breaks
+          down employment by sector.
+
+          Major industry values (available in all 50+ states):
+          - 'Total Nonfarm': All non-agricultural employment (the headline number)
+          - 'Total Private': All private sector employment
+          - 'Goods Producing': Manufacturing, construction, mining combined
+          - 'Service-Providing': All service sector jobs
+          - 'Private Service Providing': Private service sector only
+          - 'Manufacturing': Factory and production jobs
+          - 'Retail Trade': Retail store employment
+          - 'Wholesale Trade': Wholesale distribution employment
+          - 'Government': All government employment (federal + state + local)
+          - 'Government: Federal Government': Federal government jobs only
+          - 'Government: State Government': State government jobs only
+          - 'Government: Local Government': Local government jobs only
+          - 'Education And Health Services': Schools, hospitals, clinics
+          - 'Education And Health Services: Health Care And Social Assistance': Healthcare specifically
+          - 'Professional And Business Services': Consulting, legal, tech services
+          - 'Financial Activities': Banking, insurance, real estate
+          - 'Financial Activities: Finance And Insurance': Banking and insurance specifically
+          - 'Leisure And Hospitality': Hotels, restaurants, entertainment
+          - 'Leisure And Hospitality: Accommodation And Food Services': Hotels and restaurants
+          - 'Information': Media, telecom, tech, publishing
+          - 'Construction': Building and construction
+          - 'Mining And Logging': Mining, oil/gas, forestry
+          - 'Mining, Logging, And Construction: Mining, Logging And Construction': Combined
+          - 'Trade, Transportation, And Utilities': Combined trade and transport
+          - 'Transportation And Utilities: Transportation, Warehousing, And Utilities': Transport
+          - 'Other Services': Repair, personal services, nonprofits
+          - 'Durable Goods': Long-lasting manufactured products
+          - 'Non-Durable Goods': Short-life manufactured products
+        expr: INDUSTRY
+        data_type: VARCHAR
+        sample_values:
+          - Total Nonfarm
+          - Total Private
+          - Goods Producing
+          - Service-Providing
+          - Manufacturing
+          - Retail Trade
+          - Government
+          - Education And Health Services
+          - Professional And Business Services
+          - Financial Activities
+          - Leisure And Hospitality
+          - Information
+          - Construction
+          - Mining And Logging
+          - Wholesale Trade
+          - "Trade, Transportation, And Utilities"
+          - Other Services
+          - Durable Goods
+          - Non-Durable Goods
+          - "Government: Federal Government"
+          - "Government: State Government"
+          - "Government: Local Government"
+
+      - name: FREQUENCY
+        synonyms:
+          - time frequency
+          - reporting frequency
+          - data frequency
+          - how often
+          - periodicity
+          - interval
+        description: >
+          How often the data is reported.
+          'Monthly' â€” one data point per month (most common, use as default).
+          'Annual' â€” one data point per year (yearly averages/totals).
+          When the user does not specify a frequency, default to 'Monthly'.
+        expr: FREQUENCY
+        data_type: VARCHAR
+        sample_values:
+          - Monthly
+          - Annual
+
+      - name: SEASONALLY_ADJUSTED
+        synonyms:
+          - seasonal adjustment
+          - adjusted
+          - SA
+          - NSA
+          - seasonally adjusted flag
+        description: >
+          Whether the data has been adjusted to remove seasonal patterns.
+          'Seasonally adjusted' â€” removes recurring seasonal effects
+          (e.g., holiday hiring), better for identifying real trends.
+          'Not seasonally adjusted' â€” raw data with seasonal patterns included.
+          When the user does not specify, prefer 'Not seasonally adjusted'
+          as it has broader coverage across all measures.
+        expr: SEASONALLY_ADJUSTED
+        data_type: VARCHAR
+        sample_values:
+          - Seasonally adjusted
+          - Not seasonally adjusted
+
+      - name: UNIT
+        synonyms:
+          - unit of measurement
+          - measured in
+          - units
+        description: >
+          The unit for the VALUE in the timeseries table. Important for
+          interpreting results correctly.
+          'Percent' â€” for rates (unemployment rate, participation rate, JOLTS rates)
+          'Persons' â€” for people counts (employment, unemployment, labor force)
+          'Count' â€” for employee counts (All Employees) and weekly hours
+          'USD' â€” for dollar amounts (hourly and weekly earnings)
+          'Level' â€” for absolute counts in JOLTS data (job openings, hires, etc.)
+        expr: UNIT
+        data_type: VARCHAR
+        sample_values:
+          - Percent
+          - Persons
+          - Count
+          - USD
+          - Level
+
+      - name: RELEASE_SOURCE
+        synonyms:
+          - source
+          - data source
+          - agency
+          - publisher
+          - government agency
+        description: >
+          The government agency that publishes this data.
+          All data in this model comes from 'Bureau of Labor Statistics'.
+        expr: RELEASE_SOURCE
+        data_type: VARCHAR
+        sample_values:
+          - Bureau of Labor Statistics
+
+      - name: RELEASE_NAME
+        synonyms:
+          - report name
+          - survey name
+          - publication
+          - data release
+        description: >
+          The specific report or survey from which this data is published.
+          Examples: 'Current Population Survey (CPS)', 'Current Employment
+          Statistics (CES)', 'Job Openings and Labor Turnover Survey (JOLTS)'.
+        expr: RELEASE_NAME
+        data_type: VARCHAR
+        sample_values:
+          - Consumer Price Index
+          - Current Employment Statistics (National)
+          - Current Population Survey (CPS)
+          - Job Openings and Labor Turnover Survey (JOLTS)
+          - Local Area Unemployment
+          - "State and Metro Area Employment, Hours, & Earnings"
+
+      - name: MEASUREMENT_TYPE
+        synonyms:
+          - calculation method
+          - how measured
+        description: >
+          How the variable was measured or calculated. Common values
+          include 'Percent of civilian labor force' (unemployment rate),
+          'Average hourly earnings', 'Average weekly hours', 'Index of
+          aggregate weekly hours', among others. Many variables have
+          MEASUREMENT_TYPE = 'None'.
+        expr: MEASUREMENT_TYPE
+        data_type: VARCHAR
+        sample_values:
+          - None
+          - Percent of civilian labor force
+          - Percent of civilian noninstitutional population
+          - Average hourly earnings
+          - Average weekly earnings
+          - Average weekly hours
+          - Aggregate weekly hours
+          - Index of aggregate weekly hours
+          - Index of aggregate weekly payrolls
+          - Quarterly averages
+
+
+  # ---------------------------------------------------------------------------
+  # TABLE 3: GEOGRAPHY_INDEX (the geography lookup â€” translates codes to names)
+  # ---------------------------------------------------------------------------
+  # This table turns 'geoId/06' into 'California'. Without it, users would
+  # need to know FIPS codes to ask geographic questions.
+  # ---------------------------------------------------------------------------
+  - name: geography_index
+    description: >
+      Geography lookup table that maps GEO_ID codes to human-readable
+      place names. For example, 'geoId/06' maps to 'California' and
+      'country/USA' maps to 'United States'. Join to the timeseries
+      table on GEO_ID.
+
+    base_table:
+      database: SNOWFLAKE_PUBLIC_DATA_FREE
+      schema: PUBLIC_DATA_FREE
+      table: GEOGRAPHY_INDEX
+
+    # Only include US states and the national level
+    filters:
+      - name: us_states_and_national
+        description: >
+          Restrict to US states/territories and the national level only.
+          Excludes Canadian provinces, counties, cities, metro areas, etc.
+        expr: "(LEVEL = 'State' AND GEO_ID LIKE 'geoId/%') OR (LEVEL = 'Country' AND GEO_ID = 'country/USA')"
+
+    primary_key:
+      columns:
+        - GEO_ID
+
+    dimensions:
+      - name: GEO_ID
+        synonyms:
+          - geographic id
+          - location code
+        description: >
+          Unique identifier for a geographic location. Join key
+          to the timeseries table.
+        expr: GEO_ID
+        data_type: VARCHAR
+
+      - name: GEO_NAME
+        synonyms:
+          - state
+          - state name
+          - location
+          - place
+          - geography
+          - region
+          - area
+          - where
+          - location name
+          - place name
+        description: >
+          The human-readable name of the geographic location.
+          Use this column to filter by location instead of GEO_ID.
+          When a user mentions a US state like "California", "Texas",
+          or "New York", filter on this column.
+          The national level is 'United States'.
+          State examples: 'Alabama', 'Alaska', 'Arizona', 'Arkansas',
+          'California', 'Colorado', 'Connecticut', 'Delaware',
+          'District of Columbia', 'Florida', 'Georgia', 'Hawaii',
+          'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky',
+          'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan',
+          'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska',
+          'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico',
+          'New York', 'North Carolina', 'North Dakota', 'Ohio',
+          'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island',
+          'South Carolina', 'South Dakota', 'Tennessee', 'Texas',
+          'Utah', 'Vermont', 'Virginia', 'Washington',
+          'West Virginia', 'Wisconsin', 'Wyoming',
+          'Puerto Rico', 'District of Columbia'.
+        expr: GEO_NAME
+        data_type: VARCHAR
+        sample_values:
+          - United States
+          - California
+          - Texas
+          - New York
+          - Florida
+          - Illinois
+          - Pennsylvania
+          - Ohio
+          - Georgia
+          - Michigan
+          - North Carolina
+          - New Jersey
+          - Virginia
+          - Washington
+          - Massachusetts
+          - Arizona
+          - Colorado
+          - Tennessee
+          - Maryland
+          - Minnesota
+
+      - name: LEVEL
+        synonyms:
+          - geographic level
+          - geography type
+          - geo level
+        description: >
+          The geographic hierarchy level.
+          'State' â€” US state or territory.
+          'Country' â€” national level (United States).
+        expr: LEVEL
+        data_type: VARCHAR
+        sample_values:
+          - State
+          - Country
+
+
+# =============================================================================
+# RELATIONSHIPS â€” How the tables join together
+# =============================================================================
+# This tells Cortex Analyst which columns to use for JOINs.
+# Every query will typically join all 3 tables:
+#   timeseries -> attributes (to know what the value means)
+#   timeseries -> geography_index (to filter by state name)
+# =============================================================================
+relationships:
+
+  - name: timeseries_to_attributes
+    left_table: timeseries
+    right_table: attributes
+    relationship_columns:
+      - left_column: VARIABLE
+        right_column: VARIABLE
+    join_type: inner
+    relationship_type: many_to_one
+
+  - name: timeseries_to_geography
+    left_table: timeseries
+    right_table: geography_index
+    relationship_columns:
+      - left_column: GEO_ID
+        right_column: GEO_ID
+    join_type: inner
+    relationship_type: many_to_one
+
+
+# =============================================================================
+# VERIFIED QUERIES â€” Example question-SQL pairs that teach Cortex Analyst
+# =============================================================================
+# These are the most important part of the semantic model. Cortex Analyst
+# learns from these examples to generate correct SQL for new questions.
+#
+# Each query demonstrates a pattern:
+#   1. Single state, single measure
+#   2. Compare two states
+#   3. Top/bottom N states
+#   4. National trend over time
+#   5. Industry breakdown
+#   6. Year-over-year comparison
+#   7. JOLTS job dynamics
+#   8. Wages query
+#   9. Most recent data point
+#  10. Annual frequency query
+# =============================================================================
+verified_queries:
+
+  # Pattern 1: Single state, single measure, recent trend
+  - name: state_unemployment_trend
+    question: "What is the unemployment rate in California over the last 2 years?"
+    sql: |
+      SELECT
+        t.DATE,
+        t.VALUE * 100 AS unemployment_rate_pct,
+        g.GEO_NAME
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Unemployment Rate'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME = 'California'
+        AND t.DATE >= DATEADD('year', -2, CURRENT_DATE())
+      ORDER BY t.DATE
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 2: Compare two states head-to-head
+  - name: compare_two_states
+    question: "Compare the unemployment rate in Texas and New York"
+    sql: |
+      SELECT
+        t.DATE,
+        g.GEO_NAME,
+        t.VALUE * 100 AS unemployment_rate_pct
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Unemployment Rate'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME IN ('Texas', 'New York')
+        AND g.LEVEL = 'State'
+        AND t.DATE >= DATEADD('year', -1, CURRENT_DATE())
+      ORDER BY t.DATE, g.GEO_NAME
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 3: Top N states ranking
+  - name: top_states_ranking
+    question: "Which 10 states have the highest unemployment rate?"
+    sql: |
+      SELECT
+        g.GEO_NAME,
+        t.VALUE * 100 AS unemployment_rate_pct,
+        t.DATE
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Unemployment Rate'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.LEVEL = 'State'
+        AND t.DATE = (
+          SELECT MAX(t2.DATE)
+          FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t2
+          JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a2
+            ON t2.VARIABLE = a2.VARIABLE
+          WHERE a2.MEASURE = 'Unemployment Rate'
+            AND a2.FREQUENCY = 'Monthly'
+            AND a2.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+            AND a2.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        )
+      ORDER BY t.VALUE DESC
+      LIMIT 10
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 4: National trend over time
+  - name: national_trend
+    question: "Show me the national unemployment trend since 2020"
+    sql: |
+      SELECT
+        t.DATE,
+        t.VALUE * 100 AS unemployment_rate_pct,
+        g.GEO_NAME
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Unemployment Rate'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND a.VARIABLE_NAME LIKE 'Current Labor Force: Unemployment Rate, Monthly%'
+        AND g.GEO_NAME = 'United States'
+        AND t.DATE >= '2020-01-01'
+      ORDER BY t.DATE
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 5: Industry breakdown for a state
+  - name: industry_breakdown
+    question: "How many employees work in each industry in Texas?"
+    sql: |
+      SELECT
+        a.INDUSTRY,
+        t.VALUE AS employee_count,
+        t.DATE
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'All Employees'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME = 'Texas'
+        AND a.INDUSTRY IN ('Total Nonfarm', 'Manufacturing', 'Retail Trade',
+          'Government', 'Education And Health Services',
+          'Professional And Business Services', 'Leisure And Hospitality',
+          'Financial Activities', 'Construction', 'Information')
+        AND t.DATE = (
+          SELECT MAX(t2.DATE)
+          FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t2
+          JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a2
+            ON t2.VARIABLE = a2.VARIABLE
+          WHERE a2.MEASURE = 'All Employees'
+            AND a2.FREQUENCY = 'Monthly'
+            AND a2.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+            AND a2.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        )
+      ORDER BY t.VALUE DESC
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 6: Year-over-year comparison
+  - name: year_over_year
+    question: "How did employment change in Florida between 2023 and 2024?"
+    sql: |
+      SELECT
+        YEAR(t.DATE) AS year,
+        AVG(t.VALUE) AS avg_employment
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Employment'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME = 'Florida'
+        AND YEAR(t.DATE) IN (2023, 2024)
+      GROUP BY YEAR(t.DATE)
+      ORDER BY year
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 7: JOLTS â€” Job openings query
+  - name: jolts_job_openings
+    question: "How many job openings are there in Georgia?"
+    sql: |
+      SELECT
+        t.DATE,
+        t.VALUE AS job_openings,
+        g.GEO_NAME
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Job Openings: All Size Classes'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.UNIT = 'Level'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME = 'Georgia'
+        AND t.DATE >= DATEADD('year', -2, CURRENT_DATE())
+      ORDER BY t.DATE
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 8: Wages / earnings query
+  - name: wages_query
+    question: "What is the average hourly wage in Washington state?"
+    sql: |
+      SELECT
+        t.DATE,
+        t.VALUE AS avg_hourly_earnings_usd,
+        g.GEO_NAME
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Average Hourly Earnings Of All Employees'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.INDUSTRY = 'Total Private'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME = 'Washington'
+        AND t.DATE >= DATEADD('year', -2, CURRENT_DATE())
+      ORDER BY t.DATE
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 9: Latest data point â€” most recent value
+  - name: latest_value
+    question: "What is the current labor force size in Ohio?"
+    sql: |
+      SELECT
+        t.DATE,
+        t.VALUE AS labor_force,
+        g.GEO_NAME,
+        t.UNIT
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Labor Force'
+        AND a.FREQUENCY = 'Monthly'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.GEO_NAME = 'Ohio'
+      ORDER BY t.DATE DESC
+      LIMIT 1
+    verified_by: hackathon_team
+    verified_at: 1776470400
+
+  # Pattern 10: Annual frequency â€” yearly data
+  - name: annual_all_states
+    question: "Show annual unemployment rate for all states in 2024"
+    sql: |
+      SELECT
+        g.GEO_NAME,
+        t.VALUE * 100 AS unemployment_rate_pct,
+        t.DATE
+      FROM SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_TIMESERIES t
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.FINANCIAL_ECONOMIC_INDICATORS_ATTRIBUTES a
+        ON t.VARIABLE = a.VARIABLE
+      JOIN SNOWFLAKE_PUBLIC_DATA_FREE.PUBLIC_DATA_FREE.GEOGRAPHY_INDEX g
+        ON t.GEO_ID = g.GEO_ID
+      WHERE a.MEASURE = 'Unemployment Rate'
+        AND a.FREQUENCY = 'Annual'
+        AND a.SEASONALLY_ADJUSTED = 'Not seasonally adjusted'
+        AND a.RELEASE_SOURCE = 'Bureau of Labor Statistics'
+        AND g.LEVEL = 'State'
+        AND YEAR(t.DATE) = 2024
+      ORDER BY t.VALUE DESC
+    verified_by: hackathon_team
+    verified_at: 1776470400

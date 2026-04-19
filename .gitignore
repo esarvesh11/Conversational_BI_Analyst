@@ -1,2 +1,27 @@
-#Hack PS
+# Original problem brief (not needed in the public repo)
 CSEGSA_Hackathon_2026.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Snowflake / credentials — never commit secrets
+.snowsql/
+*.pem
+*.key
+config.toml
+connections.toml
+.env
+.env.*
